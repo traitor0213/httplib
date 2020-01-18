@@ -1,0 +1,11 @@
+Using protocol
+    This server is using http protocol 
+
+How to use
+    Access the root path
+        http://127.0.0.1/important-files/cat/image1.png
+        or
+        http://127.0.0.1?path=C:/important-files/cat/image1.png
+
+    Access the other path
+        http://127.0.0.1/?path=D:/report.doc

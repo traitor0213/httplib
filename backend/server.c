@@ -13,6 +13,9 @@ void server(int *fd)
     SOCKADDR_IN info = {
         0,
     };
+    
+    const char *Crlf = "\r\n\r\n";
+    const int CrlfLength = GetStringLength(Crlf);
 
     const char *Space = " ";
     const char SpaceWord = ' ';
@@ -21,6 +24,13 @@ void server(int *fd)
     const char *Parameter = "?";
     const char ParameterWord = '?';
     const int ParameterLength = GetStringLength(Parameter);
+
+    const char *And = "*&";
+    const char AndWord = '&';
+    const int AndLength = GetStringLength(And);
+
+    const char *FullPathParameter = "path=";
+    const int FullPathParameterLength = GetStringLength(FullPathParameter);
 
     //http header
     char header[4096];
@@ -60,6 +70,9 @@ void server(int *fd)
             ZeroMemory(header, sizeof(header));
             RecvLine(ResponseSocket, header, sizeof(header));
 
+            printf("\n\n\n");
+            printf("%s\n", header);
+
             /*
             find ' '(Space)
 
@@ -82,8 +95,11 @@ void server(int *fd)
             */
 
             int EncodeStringLength = GetStringLength(EncodeString);
+            
             for(int x = 0; x <= EncodeStringLength && x <= sizeof(EncodeString); x += 1)
             {
+                if(EncodeString[x] == 0) break;
+
                 if(EncodeString[x] == SpaceWord) 
                 {
                     EncodeString[x] = 0;
@@ -108,13 +124,12 @@ void server(int *fd)
             */
 
             int DecodeStringLength = GetStringLength(DecodeString);
-            int ParametersLocate = 0;
             
             for(int x = 0; x <= DecodeStringLength && x <= sizeof(DecodeString); x += 1)
             {
+                if(DecodeString[x] == 0) break;
                 if(DecodeString[x] == ParameterWord)
                 {
-                    ParametersLocate = x;
                     RequestPath[x] = 0;
                     break;
                 }
@@ -128,8 +143,58 @@ void server(int *fd)
             before = "/windows/system32/cmd.exe?download"
             after(RequestParameters) = "?download"
             */
-            //todo
+            
+            int i = 0;
+            for(int x = 0; x <= DecodeStringLength && x <= sizeof(RequestParameters); x += 1)
+            {
+                if(DecodeString[x] == 0) break;
 
+                if(DecodeString[x - 1] == ParameterWord)
+                {
+                    for(int y = 0; ; y += 1)
+                    {
+                        RequestParameters[i] = DecodeString[x + y];
+                        if(DecodeString[x + y] == 0) break;
+                        i += 1;
+                    }
+                }
+            }
+
+            /*
+            find 'path' command
+
+            before = "path=C:/windows/system32/cmd.exe&value=1234..."
+            after  = "C:/windows/system32/cmd.exe"
+            */
+            
+            int RequestParametersLength = GetStringLength(RequestParameters);
+            const char *FullPath = Kmp(RequestParameters, RequestParametersLength, FullPathParameter, FullPathParameterLength);
+            
+            int AndLocation = GetStringLength(FullPath);
+            if(FullPath != NULL)
+            {
+                FullPath += FullPathParameterLength;
+
+                for(int x = 0; ; x += 1)
+                {
+                    if(FullPath[x] == 0) break;
+
+                    if(FullPath[x] == AndWord)
+                    {
+                        if (x > 0)
+                        {
+                            AndLocation = x;
+                        }
+
+                        break;
+                    }
+                }
+
+                memcpy(RequestPath, FullPath, AndLocation);
+
+                printf("\n");
+            }
+            
             printf("Request File = '%s'\n", RequestPath);
             printf("Request Params = '%s'\n", RequestParameters);
 
@@ -151,8 +216,6 @@ void server(int *fd)
 
                     break;
                 }
-
-                //printf("%s", header);
             }
 
 RESPONSE:;
@@ -164,7 +227,7 @@ RESPONSE:;
 
             HANDLE hRequestFile = CreateFile(RequestPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if(hRequestFile != INVALID_HANDLE_VALUE)
-            {
+            { 
                 ResponseContentSize = GetFileSize(hRequestFile, NULL);
                 ResponseContent = (char *)GlobalAlloc(GPTR, ResponseContentSize);
 
@@ -175,25 +238,24 @@ RESPONSE:;
             }
             else 
             {
+                //request file is not exist
                 IsCreateFileError = TRUE;
             }
 
-            const char *test = "HelloWorld";
-
             const int DefualtSize = 1024;
             char *response = GlobalAlloc(GPTR, DefualtSize + ResponseContentSize);
-            warraper(response, DefualtSize + ResponseContentSize,
+            CreateHttpRaw(response, DefualtSize + ResponseContentSize,
                      "HTTP/1.1 200 OK",
+                     "Content-Disposition", "inline",
                      "Content-Length", ResponseContentSize,
                      "Content", ResponseContent);
-
-            const char *Crlf = "\r\n\r\n";
-            const int CrlfLength = GetStringLength(Crlf);
 
             const char *ptr = Kmp(response, DefualtSize, Crlf, CrlfLength);
             const int ResponseLength = (ptr - response) + ResponseContentSize + CrlfLength;
 
             send_(ResponseSocket, response, ResponseLength, 0);
+
+            ZeroMemory(RequestPath, sizeof(RequestPath));
 
             if(IsCreateFileError == FALSE)
             {

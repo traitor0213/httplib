@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <Windows.h>
+
 int _log10(int n)
 {
 	int r = 0;
@@ -16,6 +19,8 @@ int _log10(int n)
 //get string length
 int GetStringLength(const char* s)
 {
+	if (s == NULL) return 0;
+
 	int r = 0;
 	for (; *s != 0; s++) r++;
 
@@ -30,10 +35,16 @@ int StringCompare(const char* s1, const char* s2)
 	int t1 = 0;
 	int t2 = 0;
 
+	if (s1 == NULL || s2 == NULL) return 1;
+
 	for (; *s1 != 0; s1++)
 	{
-		if (*s2 == 0) break;
-		
+		if (*s2 == 0)
+		{
+			f = 1;
+			break;
+		}
+
 		//next word
 		t1 = *s1;
 		t2 = *s2++;
@@ -142,11 +153,11 @@ int DecimalToString(char* buf, int dec)
 //kmp algorithm
 const char* Kmp(const char* Source, int SourceSize, const char* Destination, int DestinationSize)
 {
-	if(DestinationSize > SourceSize)
+	if (DestinationSize > SourceSize)
 	{
 		return NULL;
 	}
-	
+
 	int IsError = 0;
 	const char* ret = NULL;
 
@@ -180,7 +191,7 @@ const char* Kmp(const char* Source, int SourceSize, const char* Destination, int
 }
 
 
-int SeparateString(char *buffer, int size, const char* s, const char *f)
+int SeparateString(char* buffer, int size, const char* s, const char* f)
 {
 	int r = 0;
 	int FindLength = GetStringLength(f);
@@ -207,3 +218,75 @@ int SeparateString(char *buffer, int size, const char* s, const char *f)
 
 	return r;
 }
+
+//copycat of sprintf in stdlib.h
+void _sprintf(char* buffer, int size, const char* format, ...)
+{
+	const char** args = &format;
+	int FormatLength = GetStringLength(format);
+
+	int CopyIndex = 0;
+
+	int f = 0;
+
+	for (int r = 0; r != size; r++)
+	{
+		if (format[r] == 0) break;
+
+		if (r > 0)
+		{
+			if (format[r - 1] == '%')
+			{
+				//%%
+				if (format[r] == '%')
+				{
+					buffer[f] = format[r];
+					buffer[f + 1] = 0;
+					f++;
+				}
+
+				//%~
+				if (format[r] != '%')
+				{
+					if (format[r] == 'd')
+					{
+						args += 1;
+
+						int length = DecimalToString(buffer + f, (int)*args);
+						f += length;
+
+						buffer[f + 1] = 0;
+					}
+
+					if (format[r] == 's')
+					{
+						args += 1;
+
+						int length = GetStringLength(*args);
+
+						memcpy(buffer + f, *args, length);
+						f += length;
+						buffer[f] = 0;
+					}
+				}
+			}
+
+			if (format[r - 1] != '%' && format[r] != '%')
+			{
+				buffer[f] = format[r];
+				buffer[f + 1] = 0;
+				f++;
+			}
+		}
+		else
+		{
+			if (format[r] != '%')
+			{
+				buffer[f] = format[r];
+				buffer[f + 1] = 0;
+				f++;
+			}
+		}
+	}
+}
+
