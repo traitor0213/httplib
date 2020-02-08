@@ -1,3 +1,6 @@
+#ifndef HTTP_H
+#define HTTP_H
+
 #include "./tcp.h"
 #include "./str.h"
 
@@ -16,6 +19,8 @@ int RecvLine(int hSocket, char *buffer, int len)
         {
             if(WSAGetLastError_() != WSAEWOULDBLOCK)
             {
+				index = SOCKET_ERROR;
+
                 break;
             }
         }
@@ -68,7 +73,7 @@ int CreateHttpRaw(char* buffer, int size, const char* method, const char* header
 			memcpy(buffer + GetStringLength(buffer), Crlf, CrlfLength + 1);
 			memcpy(buffer + GetStringLength(buffer), Crlf, CrlfLength + 1);
 
-			if (ContentLength != 0)
+			if (ContentLength > 0)
 			{
 				memcpy(buffer + GetStringLength(buffer), *(parameters + 1), ContentLength);
 			}
@@ -96,3 +101,5 @@ int CreateHttpRaw(char* buffer, int size, const char* method, const char* header
 
 	return 0;
 }
+
+#endif

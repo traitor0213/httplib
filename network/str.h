@@ -1,3 +1,6 @@
+#ifndef STR_H
+#define STR_H
+
 #include <stdio.h>
 #include <Windows.h>
 
@@ -290,3 +293,4 @@ void _sprintf(char* buffer, int size, const char* format, ...)
 	}
 }
 
+#endif
