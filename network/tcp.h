@@ -274,7 +274,7 @@ int OpenTcpPort(unsigned short Port, int BackLog, int IoCtlFlag)
     return fd;
 }
 
-int AcceptTcpRequest(SOCKADDR_IN *AcceptInfo, int OpenSocket)
+int Accepter(SOCKADDR_IN *AcceptInfo, int OpenSocket)
 {
     int size = sizeof(SOCKADDR_IN);
     return accept_(OpenSocket, (SOCKADDR *)AcceptInfo, &size);
@@ -312,7 +312,7 @@ SOCKADDR_IN _GetHostName(const char *name)
     return info;
 }
 
-int AttemptTcpRequest(SOCKET hSocket, const char *ip, const char *port)
+int Connecter(SOCKET hSocket, const char *ip, const char *port)
 {
     SOCKADDR_IN AccepterInfo = {
         0,

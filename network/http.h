@@ -65,6 +65,7 @@ int CreateHttpRaw(char* buffer, int size, const char* method, const char* header
 	const int SpaceLength = GetStringLength(Space);
 
 	int ContentLength = 0;
+	int BufferLength = 0;
 
 	for (;;)
 	{
@@ -77,6 +78,8 @@ int CreateHttpRaw(char* buffer, int size, const char* method, const char* header
 			{
 				memcpy(buffer + GetStringLength(buffer), *(parameters + 1), ContentLength);
 			}
+
+			for(; buffer[BufferLength] != 0; BufferLength++);
 
 			break;
 		}
@@ -99,7 +102,7 @@ int CreateHttpRaw(char* buffer, int size, const char* method, const char* header
 		parameters += 2;
 	}
 
-	return 0;
+	return ContentLength + BufferLength;
 }
 
 #endif
