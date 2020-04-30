@@ -274,7 +274,7 @@ int OpenTcpPort(unsigned short Port, int BackLog, int IoCtlFlag)
     return fd;
 }
 
-int Accepter(SOCKADDR_IN *AcceptInfo, int OpenSocket)
+int AcceptRequest(SOCKADDR_IN *AcceptInfo, int OpenSocket)
 {
     int size = sizeof(SOCKADDR_IN);
     return accept_(OpenSocket, (SOCKADDR *)AcceptInfo, &size);

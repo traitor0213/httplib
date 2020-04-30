@@ -42,10 +42,17 @@ void server(int *fd)
     char RequestPath[1024];
     char RequestParameters[1024];
 
+    char temp[1024];
+    char OtherPath[1024];
+    char RootPath[1024];
+    char RootDrive[3];
+
+    char ext[_MAX_EXT];
+
     //accept loop
     for (;;)
     {
-        int ResponseSocket = AcceptTcpRequest(&info, *fd);
+        int ResponseSocket = AcceptRequest(&info, *fd);
         if (ResponseSocket < 0)
         {
             //case of socket error
@@ -58,6 +65,9 @@ void server(int *fd)
         }
         else
         {
+            ZeroMemory(RequestPath, sizeof(RequestPath));
+            ZeroMemory(RequestParameters, sizeof(RequestParameters));
+
             /*
             Recv first line of request header
             
@@ -192,11 +202,8 @@ void server(int *fd)
 
                 memcpy(RequestPath, FullPath, AndLocation);
 
-                printf("\n");
             }
             
-            printf("Request File = '%s'\n", RequestPath);
-            printf("Request Params = '%s'\n", RequestParameters);
 
             //read other http request header
             for (;;)
@@ -219,6 +226,14 @@ void server(int *fd)
             }
 
 RESPONSE:;
+
+            if(Kmp(RequestPath, sizeof(RequestPath), "index.html", 11) == NULL) 
+            {
+                sprintf(OtherPath, "%s%s", RootPath, RequestPath);
+                memcpy(RequestPath, OtherPath, sizeof(OtherPath));
+
+                printf("Open file = %s\n", RequestPath);
+            }
 
             char *ResponseContent = NULL;
             DWORD ResponseContentSize = 0;
@@ -255,8 +270,6 @@ RESPONSE:;
 
             send_(ResponseSocket, response, ResponseLength, 0);
 
-            ZeroMemory(RequestPath, sizeof(RequestPath));
-
             if(IsCreateFileError == FALSE)
             {
                 GlobalFree(ResponseContent);
@@ -267,6 +280,18 @@ RESPONSE:;
             //end of connection
             shutdown_(ResponseSocket, SD_BOTH);
             closesocket_(ResponseSocket);
+
+            printf("Request File = '%s'\n", RequestPath);
+            printf("Request Params = '%s'\n", RequestParameters);
+            
+            if(Kmp(RequestPath, sizeof(RequestPath), "index.html", 11) != NULL) 
+            {
+                _splitpath(RequestPath, RootDrive, temp, NULL, NULL);
+
+                sprintf(RootPath, "%s%s", RootDrive, temp);
+
+                printf("Setting Root = %s\n", RootPath);
+            }
         }
     }
 }
