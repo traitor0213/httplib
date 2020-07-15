@@ -56,7 +56,7 @@ int DecodeUrl(char *buffer, int size, const char *s)
     const int HexRange = 2;
     const int Format = '%';
 
-    char hex[HexRange + 1];
+    char hex[2 + 1];
 
     int x = 0;
 
@@ -87,5 +87,8 @@ int DecodeUrl(char *buffer, int size, const char *s)
         }
     }
 
-    return 0;
+    int k = 0;
+    for(k = 0; buffer[k] != 0; k++);
+
+    return k;
 }

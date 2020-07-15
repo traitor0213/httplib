@@ -30,7 +30,7 @@ int EncodeUrl(char *Destination, int SizeOfDestination, const char *Source)
         }
         else
         {
-            wsprintf(HexString, "%%%02X", Source[SourceIndex]);
+            sprintf(HexString, "%%%02X", Source[SourceIndex]);
             int HexStringLength = lstrlen(HexString);
 
             if (SizeOfDestination <= DestinationLength + HexStringLength)

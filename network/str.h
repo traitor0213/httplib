@@ -1,3 +1,4 @@
+
 #ifndef STR_H
 #define STR_H
 
@@ -79,51 +80,31 @@ int StringCompare(const char* s1, const char* s2)
 //"1234" to 1234
 int StringToDecimal(const char* s)
 {
-	int i = 0;
-
-	int r = 0;
 	int scope = 1;
+	BYTE Array[10];
 
-	i = 0;
+	int DecimalLength = 0;
 	for (;;)
 	{
-		if (s[i] >= '0' && s[i] <= '9')
-		{
-			r += (s[i] - '0') * scope;
-		}
-		else
+		if ( (s[DecimalLength] >= '0' && s[DecimalLength] <= '9') == FALSE)
 		{
 			break;
 		}
 
-		scope *= 10;
-
-		i++;
+		DecimalLength++;
 	}
 
-	//if argument = 1024, 'r' value is 4021
-	int l = 0;
-	int x = (int)_log10(r) + 1;
-	scope = 10;
+	int r = 0;
+	int j = 1;
+	for (int i = 0; i != DecimalLength; i++) j *= 10;
 
-	int z = 1;
-
-	//4021 to 1204
-
-	for (int y = 1; y != x; y++)
+	for (int i = 0; i <= DecimalLength - 1; i++)
 	{
-		scope *= 10;
+		r += (s[i] - '0') * j;
+		j /= 10;
 	}
-
-	for (; x != 0; x--)
-	{
-		scope /= 10;
-		l += r / scope * z;
-		r %= scope;
-		z *= 10;
-	}
-
-	return l;
+	
+	return r / 10;
 }
 
 //1234 to "1234"
@@ -151,6 +132,24 @@ int DecimalToString(char* buf, int dec)
 	buf[i] = 0;
 
 	return len;
+}
+
+
+int GetChrLocation(const char* String, char chr)
+{
+	int StringLength = GetStringLength(String);
+
+	int b = 0;
+	int i = 0;
+	for (; i != StringLength; i++)
+	{
+		if (String[i] == chr)
+		{
+			return i + 1;
+		}
+	}
+
+	return -1;
 }
 
 //kmp algorithm
@@ -193,6 +192,47 @@ const char* Kmp(const char* Source, int SourceSize, const char* Destination, int
 	return ret;
 }
 
+const char* FindString(const char* Source, const char* Destination)
+{
+	int SourceSize = GetStringLength(Source);
+	int DestinationSize = GetStringLength(Destination);
+
+	if (DestinationSize > SourceSize)
+	{
+		return NULL;
+	}
+
+	int IsError = 0;
+	const char* ret = NULL;
+
+	for (int x = 0; x != SourceSize; x++)
+	{
+		if (x + DestinationSize > SourceSize)
+		{
+			ret = NULL;
+			break;
+		}
+
+		IsError = 0;
+
+		for (int y = 0; y != DestinationSize; y++)
+		{
+			if (Source[y + x] != Destination[y])
+			{
+				IsError = 1;
+				break;
+			}
+		}
+
+		if (IsError == 0)
+		{
+			ret = &Source[x];
+			break;
+		}
+	}
+
+	return ret;
+}
 
 int SeparateString(char* buffer, int size, const char* s, const char* f)
 {
@@ -291,6 +331,41 @@ void _sprintf(char* buffer, int size, const char* format, ...)
 			}
 		}
 	}
+}
+
+
+BOOL FindIntData(int *f, const char *HttpLineBuffer, const char *Find)
+{
+    BOOL data = FALSE;
+
+    if (FindString(HttpLineBuffer, Find) != NULL)
+    {
+        int length = GetStringLength(Find);
+
+        int index = length;
+        for (;; index++)
+        {
+            //2,147,483,647
+            if (index == length + 10)
+                break;
+
+            if (HttpLineBuffer[index] == '\r' ||
+                HttpLineBuffer[index] == '\n' ||
+                HttpLineBuffer[index] == 0)
+            {
+                break;
+            }
+
+            *f = StringToDecimal(HttpLineBuffer + index);
+            if (*f != 0)
+            {
+                data = TRUE;
+                break;
+            }
+        }
+    }
+
+    return data;
 }
 
 #endif
