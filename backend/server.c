@@ -52,6 +52,8 @@ void server(int *fd)
     //accept loop
     for (;;)
     {
+        Sleep(1);
+
         int ResponseSocket = AcceptRequest(&info, *fd);
         if (ResponseSocket < 0)
         {
@@ -259,23 +261,26 @@ RESPONSE:;
 
             const int DefualtSize = 1024;
             char *response = GlobalAlloc(GPTR, DefualtSize + ResponseContentSize);
-            CreateHttpRaw(response, DefualtSize + ResponseContentSize,
-                     "HTTP/1.1 200 OK",
-                     "Content-Disposition", "inline",
-                     "Content-Length", ResponseContentSize,
-                     "Content", ResponseContent);
-
-            const char *ptr = Kmp(response, DefualtSize, Crlf, CrlfLength);
-            const int ResponseLength = (ptr - response) + ResponseContentSize + CrlfLength;
-
-            send_(ResponseSocket, response, ResponseLength, 0);
-
-            if(IsCreateFileError == FALSE)
+            if(response != NULL) 
             {
-                GlobalFree(ResponseContent);
-            }
+                CreateHttpRaw(response, DefualtSize + ResponseContentSize,
+                        "HTTP/1.1 200 OK",
+                        "Content-Disposition", "inline",
+                        "Content-Length", ResponseContentSize,
+                        "Content", ResponseContent);
 
-            GlobalFree(response);
+                const char *ptr = Kmp(response, DefualtSize, Crlf, CrlfLength);
+                const int ResponseLength = (ptr - response) + ResponseContentSize + CrlfLength;
+
+                send_(ResponseSocket, response, ResponseLength, 0);
+
+                if(IsCreateFileError == FALSE)
+                {
+                    GlobalFree(ResponseContent);
+                }
+
+                GlobalFree(response);
+            }
 
             //end of connection
             shutdown_(ResponseSocket, SD_BOTH);
@@ -325,7 +330,7 @@ int main()
     return value is opened socket 
     */
 
-    const int Port = 80;
+    const int Port = 8080;
     const int Backlog = 1024;
     printf("[+] open port=%d; backlog=%d\n", Port, Backlog);
     int ServerSocket = OpenTcpPort(Port, Backlog, TRUE);
@@ -374,6 +379,7 @@ int main()
     char input[126];
     for (;;)
     {
+        Sleep(0);
         //get stdin stream
         fgets(input, sizeof(input) - 1, stdin);
 
